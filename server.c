@@ -66,9 +66,67 @@ int process_user_modify_request(int acceptfd,MSG *msg)
 
 int process_user_query_request(int acceptfd,MSG *msg)
 {
-	printf("------------%s-----------%d.\n",__func__,__LINE__);
-	return 0;
+	//printf("------------%s-----------%d.\n",__func__,__LINE__);
 
+	char sql[DATALEN] = {0};
+	char *errmsg;
+	char **result;
+	int nrow,ncolumn;
+	int i,j,num = 0;
+
+	sprintf(sql,"select * from usrinfo where name = '%s' and passwd = '%s';"\
+			,msg->info.name,msg->info.passwd);
+	//printf("sql:%s\n",sql);
+	
+	int callback(void * para,int f_num,char ** f_value, char **f_name){
+	//	for(i= 0; i<f_num;i++){
+	//		printf("%s\t",f_value[i]);
+	//	}
+	//	printf("\n");
+			msg->info.no = atoi(f_value[0]);
+			msg->info.usertype = atoi(f_value[1]);
+			strcpy(msg->info.name,f_value[2]);
+			strcpy(msg->info.passwd ,f_value[3]);
+			msg->info.age = atoi(f_value[4]);
+			strcpy(msg->info.phone , f_value[5]);
+			strcpy(msg->info.addr , f_value[6]);
+			strcpy(msg->info.work , f_value[7]);
+			strcpy(msg->info.date ,f_value[8]);
+			msg->info.level = atoi(f_value[9]);
+			msg->info.salary = atoi(f_value[10]);
+	}
+	if((sqlite3_exec(db,sql,callback,"select",&errmsg))!= SQLITE_OK){		
+		printf("%s --failed to select table ---- USER_QUERY",errmsg);
+	}
+	msg->flags = 1;
+
+	if((send(acceptfd,msg,sizeof(MSG),0)) < 0){
+		printf("server failed to send ---USER_QUERY\n");
+	}
+#if 0 
+	if((sqlite3_get_table(db,sql,&result,&nrow,&ncolumn,&errmsg))!= SQLITE_OK){
+		printf("%s --failed to select table ---- USER_QUERY",errmsg);
+	}else{
+		if(nrow == 0){
+		strcpy(msg->recvmsg,"not find");
+		send(acceptfd,msg,sizeof(MSG),0);
+		}else{
+		strcpy(msg->recvmsg,"OK");
+		msg->flags = 1;
+
+		for(i = 1 ;i < nrow + 1; i++){
+		
+			for(j = 0; j < ncolumn; j++ ){
+				//msg->info.no = result[num++]
+				printf("%s\t",result[num++]);
+			}
+			printf("\n");
+		}	
+		send(acceptfd,msg,sizeof(MSG),0);	
+	}	
+	return 0;
+	}
+#endif
 }
 
 
@@ -79,13 +137,12 @@ int process_admin_modify_request(int acceptfd,MSG *msg)
 
 }
 
-
 int process_admin_adduser_request(int acceptfd,MSG *msg)
 {
 	//printf("------------%s-----------%d.\n",__func__,__LINE__);
 	char * errmsg;
 	char sql[DATALEN]={0};
-	sprintf(sql,"insert into usrinfo values (%d,%d,'%s','%s',%d,'%s','%s','%s','%s',%d,%lf)",\
+	sprintf(sql,"insert into usrinfo values (%d,%d,'%s','%s',%d,'%s','%s','%s','%s',%d,%lf);",\
 			msg->info.no, msg->info.usertype, msg->info.name, msg->info.passwd,\
 			msg->info.age, msg->info.phone, msg->info.addr, msg->info.work,\
 			msg->info.date, msg->info.level, msg->info.salary);

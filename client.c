@@ -119,7 +119,6 @@ void do_admin_adduser(int sockfd,MSG *msg)//管理员添加用户
 	}
 
 
-
 }
 /**************************************
  *函数名：admin_deluser
@@ -205,8 +204,23 @@ void admin_menu(int sockfd,MSG *msg)
  ****************************************/
 void do_user_query(int sockfd,MSG *msg)
 {
-	printf("------------%s-----------%d.\n",__func__,__LINE__);
-
+	//printf("------------%s-----------%d.\n",__func__,__LINE__);
+	msg->msgtype = USER_QUERY;
+	msg->usertype = USER;
+	msg->flags = 0;
+	printf("username:%s\n",msg->info.name);
+	if(send(sockfd,msg,sizeof(MSG),0) < 0){
+		perror("failed to send ---- do_user_query\n");
+	}
+	if(recv(sockfd,msg,sizeof(MSG),0) < 0){
+		perror("failed to receive from server ---- do_user_query\n");
+	}
+	if(msg->flags == 1){
+		printf("no:%d,type:%d,name:%s,pwd:%s,age:%d,phone:%s,addr:%s,work:%s,date;%s,level:%d,salary:%lf\n",\
+				msg->info.no, msg->info.usertype, msg->info.name, msg->info.passwd, msg->info.age,\
+				msg->info.phone, msg->info.addr, msg->info.work, msg->info.date,\
+				msg->info.level, msg->info.salary);
+	}
 }
 
 
