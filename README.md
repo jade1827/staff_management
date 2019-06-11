@@ -11,3 +11,9 @@ upload stage-basicframe
 
 day 20190611 14:02  ----puyu
 add function admin add user
+
+day 20190611 16:30  ----puyu
+add function user query
+
+day 20190611 20:02  ----puyu
+add function user modify
