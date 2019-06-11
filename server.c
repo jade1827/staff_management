@@ -190,7 +190,7 @@ int process_admin_adduser_request(int acceptfd,MSG *msg)
 	}
 	else{
 		printf("ADMIN_ADDUSER success\n");
-		strcpy(msg->recvmsg,"OK");
+		strcpy(msg->recvmsg,"ADMIN_ADDUSER");
 		msg->flags = 1;
 		//return 0;
 	}
@@ -221,7 +221,11 @@ int process_admin_query_request(int acceptfd,MSG *msg)
 
 int process_admin_history_request(int acceptfd,MSG *msg)
 {
-	printf("------------%s-----------%d.\n",__func__,__LINE__);
+	//printf("------------%s-----------%d.\n",__func__,__LINE__);
+	
+	//strcpy(msg->recvmsg,"ADMIN_HISTORY");
+	//send(acceptfd,msg,sizeof(MSG),0);
+	
 	return 0;
 
 }
@@ -229,7 +233,8 @@ int process_admin_history_request(int acceptfd,MSG *msg)
 
 int process_client_quit_request(int acceptfd,MSG *msg)
 {
-	printf("------------%s-----------%d.\n",__func__,__LINE__);
+	//printf("------------%s-----------%d.\n",__func__,__LINE__);
+	close(acceptfd);
 	return 0;
 
 }
@@ -244,29 +249,37 @@ int process_client_request(int acceptfd,MSG *msg)
 		case USER_LOGIN:
 		case ADMIN_LOGIN:
 			process_user_or_admin_login_request(acceptfd,msg);
+			historyinfo_insert(msg);
 			break;
 		case USER_MODIFY:
 			process_user_modify_request(acceptfd,msg);
+			historyinfo_insert(msg);
 			break;
 		case USER_QUERY:
 			process_user_query_request(acceptfd,msg);
+			historyinfo_insert(msg);
 			break;
 		case ADMIN_MODIFY:
 			process_admin_modify_request(acceptfd,msg);
+			historyinfo_insert(msg);
 			break;
 
 		case ADMIN_ADDUSER:
 			process_admin_adduser_request(acceptfd,msg);
+			historyinfo_insert(msg);
 			break;
 
 		case ADMIN_DELUSER:
 			process_admin_deluser_request(acceptfd,msg);
+			historyinfo_insert(msg);
 			break;
 		case ADMIN_QUERY:
 			process_admin_query_request(acceptfd,msg);
+			historyinfo_insert(msg);
 			break;
 		case ADMIN_HISTORY:
 			process_admin_history_request(acceptfd,msg);
+			historyinfo_insert(msg);
 			break;
 		case QUIT:
 			process_client_quit_request(acceptfd,msg);
@@ -402,6 +415,17 @@ int main(int argc, const char *argv[])
 }
 
 
+void historyinfo_insert(MSG * msg){
+	
+	char * errmsg;
+	char sql[DATALEN]={0};
+	sprintf(sql,"insert into historyinfo values ('%s','%s','%s');",\
+			date, msg->username, msg->usertype);
+	if((sqlite3_exec(db,sql,NULL,NULL,&errmsg))!=SQLITE_OK){
+		printf("history failed -- %s\n",errmsg);
+	}
+
+}
 
 
 

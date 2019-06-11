@@ -140,7 +140,8 @@ void do_admin_deluser(int sockfd,MSG *msg)//管理员删除用户
  ****************************************/
 void do_admin_history (int sockfd,MSG *msg)
 {
-	printf("------------%s-----------%d.\n",__func__,__LINE__);
+	//printf("------------%s-----------%d.\n",__func__,__LINE__);
+	
 
 }
 
