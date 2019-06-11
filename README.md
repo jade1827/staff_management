@@ -8,3 +8,6 @@ upload stage-basicframe
 
 day 20190611 9:01  ----zhongzhibang
 upload stage-basicframe
+
+day 20190611 14:02  ----puyu
+add function admin add user
