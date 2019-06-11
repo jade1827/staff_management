@@ -59,7 +59,7 @@ int process_user_or_admin_login_request(int acceptfd,MSG *msg)
 int process_user_modify_request(int acceptfd,MSG *msg)
 {
 	printf("------------%s-----------%d.\n",__func__,__LINE__);
-
+	return 0;
 }
 
 
@@ -67,6 +67,7 @@ int process_user_modify_request(int acceptfd,MSG *msg)
 int process_user_query_request(int acceptfd,MSG *msg)
 {
 	printf("------------%s-----------%d.\n",__func__,__LINE__);
+	return 0;
 
 }
 
@@ -74,13 +75,38 @@ int process_user_query_request(int acceptfd,MSG *msg)
 int process_admin_modify_request(int acceptfd,MSG *msg)
 {
 	printf("------------%s-----------%d.\n",__func__,__LINE__);
+	return 0;
 
 }
 
 
 int process_admin_adduser_request(int acceptfd,MSG *msg)
 {
-	printf("------------%s-----------%d.\n",__func__,__LINE__);
+	//printf("------------%s-----------%d.\n",__func__,__LINE__);
+	char * errmsg;
+	char sql[DATALEN]={0};
+	sprintf(sql,"insert into usrinfo values (%d,%d,'%s','%s',%d,'%s','%s','%s','%s',%d,%lf)",\
+			msg->info.no, msg->info.usertype, msg->info.name, msg->info.passwd,\
+			msg->info.age, msg->info.phone, msg->info.addr, msg->info.work,\
+			msg->info.date, msg->info.level, msg->info.salary);
+	
+	printf("%s\n",sql);
+	
+	if(sqlite3_exec(db,sql,NULL,NULL,&errmsg) != SQLITE_OK){
+		printf("%s\n",errmsg);
+		return -1;
+	}
+	else{
+		printf("ADMIN_ADDUSER success\n");
+		strcpy(msg->recvmsg,"OK");
+		msg->flags = 1;
+		//return 0;
+	}
+
+	if(send(acceptfd,msg,sizeof(MSG),0) <0){
+		perror("server send failed\n");
+		return -1;
+	}
 
 }
 
@@ -89,6 +115,7 @@ int process_admin_adduser_request(int acceptfd,MSG *msg)
 int process_admin_deluser_request(int acceptfd,MSG *msg)
 {
 	printf("------------%s-----------%d.\n",__func__,__LINE__);
+	return 0;
 
 }
 
@@ -96,12 +123,14 @@ int process_admin_deluser_request(int acceptfd,MSG *msg)
 int process_admin_query_request(int acceptfd,MSG *msg)
 {
 	printf("------------%s-----------%d.\n",__func__,__LINE__);
+	return 0;
 
 }
 
 int process_admin_history_request(int acceptfd,MSG *msg)
 {
 	printf("------------%s-----------%d.\n",__func__,__LINE__);
+	return 0;
 
 }
 
@@ -109,13 +138,15 @@ int process_admin_history_request(int acceptfd,MSG *msg)
 int process_client_quit_request(int acceptfd,MSG *msg)
 {
 	printf("------------%s-----------%d.\n",__func__,__LINE__);
+	return 0;
 
 }
 
 
 int process_client_request(int acceptfd,MSG *msg)
 {
-	printf("------------%s-----------%d.\n",__func__,__LINE__);
+	//printf("------------%s-----------%d.\n",__func__,__LINE__);
+//	printf("add_user----msgtype :%#x\n",msg->msgtype);
 	switch (msg->msgtype)
 	{
 		case USER_LOGIN:
@@ -208,7 +239,7 @@ int main(int argc, const char *argv[])
 //	serveraddr.sin_port   = htons(atoi(argv[2]));
 //	serveraddr.sin_addr.s_addr = inet_addr(argv[1]);
 	serveraddr.sin_port   = htons(5001);
-	serveraddr.sin_addr.s_addr = inet_addr("192.168.1.200");
+	serveraddr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
 
 	//绑定网络套接字和网络结构体

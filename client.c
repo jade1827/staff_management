@@ -19,6 +19,7 @@
 
 #include "common.h"
 
+
 /**************************************
  *函数名：do_query
  *参   数：消息结构体
@@ -53,10 +54,73 @@ void do_admin_modification(int sockfd,MSG *msg)//管理员修改
  ****************************************/
 void do_admin_adduser(int sockfd,MSG *msg)//管理员添加用户
 {		
-	printf("------------%s-----------%d.\n",__func__,__LINE__);
+//	printf("------------%s-----------%d.\n",__func__,__LINE__);
+
+	msg->msgtype = ADMIN_ADDUSER;
+	msg->usertype = ADMIN;
+
+
+	printf("please infut staff nomber:\n");
+	scanf("%d",&(msg->info.no));
+	getchar();
+	
+	printf("please infut usertypr:(admin:1 user:2)\n");
+	scanf("%d",&(msg->info.usertype));
+	getchar();
+
+	printf("please input username:\n");
+	scanf("%s",msg->info.name);
+	getchar();
+
+	printf("please input password:\n");
+	scanf("%s",msg->info.passwd);
+	getchar();
+
+	printf("please input age:\n");
+	scanf("%d",&(msg->info.age));
+	getchar();
+	
+	printf("please input user phonenum:\n");
+	scanf("%s",msg->info.phone);
+	getchar();
+
+	printf("please input home address:\n");
+	scanf("%s",msg->info.addr);
+	getchar();
+
+	printf("please input user's work:\n");
+	scanf("%s",msg->info.work);
+	getchar();
+
+	printf("please input date:\n");
+	scanf("%s",msg->info.date);
+	getchar();
+
+	printf("please input level\n");
+	scanf("%d",&(msg->info.level));
+	getchar();
+
+	printf("please input salary\n");
+	scanf("%lf",&(msg->info.salary));
+	getchar();
+
+	if(send(sockfd,msg,sizeof(MSG),0) < 0){
+		printf("failed to send ---- admin_adduser");
+	}
+
+	if(recv(sockfd,msg,sizeof(MSG),0) < 0){
+		printf("failed to reveive form server--- admin_adduser");	
+	} 
+
+	if(msg->flags == 1){
+		printf("msg->recvmsg:%s . ,success\n",msg->recvmsg);
+		msg->msgtype = ADMIN_LOGIN;
+		admin_menu(sockfd,msg);
+	}
+
+
+
 }
-
-
 /**************************************
  *函数名：admin_deluser
  *参   数：消息结构体
@@ -64,7 +128,7 @@ void do_admin_adduser(int sockfd,MSG *msg)//管理员添加用户
  ****************************************/
 void do_admin_deluser(int sockfd,MSG *msg)//管理员删除用户
 {
-	printf("------------%s-----------%d.\n",__func__,__LINE__);
+//	printf("------------%s-----------%d.\n",__func__,__LINE__);
 
 }
 
@@ -318,7 +382,7 @@ int main(int argc, const char *argv[])
 //	serveraddr.sin_port   = htons(atoi(argv[2]));
 //	serveraddr.sin_addr.s_addr = inet_addr(argv[1]);
 	serveraddr.sin_port   = htons(5001);
-	serveraddr.sin_addr.s_addr = inet_addr("192.168.1.200");
+	serveraddr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
 	if(connect(sockfd,(const struct sockaddr *)&serveraddr,addrlen) == -1){
 		perror("connect failed.\n");

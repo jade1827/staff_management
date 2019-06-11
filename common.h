@@ -49,6 +49,7 @@
 #define NAMELEN 16
 #define DATALEN 128
 
+
 /*员工基本信息*/
 typedef struct staff_info{
 	int  no; 			//员工编号
@@ -96,5 +97,7 @@ typedef struct thread_node{
 }linklist, *plinklist;
 
 
+//declear all function 
+void admin_menu(int, MSG *);
 #endif
 
