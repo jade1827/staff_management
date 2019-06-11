@@ -58,7 +58,42 @@ int process_user_or_admin_login_request(int acceptfd,MSG *msg)
 
 int process_user_modify_request(int acceptfd,MSG *msg)
 {
-	printf("------------%s-----------%d.\n",__func__,__LINE__);
+	//printf("------------%s-----------%d.\n",__func__,__LINE__);
+	char sql[DATALEN]={0};
+	char *errmsg;
+	switch(msg->flags){
+	case 1 :
+		sprintf(sql,"update usrinfo set passwd = '%s' where staffno = %d;",msg->info.passwd, msg->info.no);
+		printf("sql:%s\n",sql);
+		break;
+	case 2:
+		sprintf(sql,"update usrinfo set age = %d where staffno = %d;",msg->info.age, msg->info.no);
+		printf("sql:%s\n",sql);
+		break;
+	case 3:
+		sprintf(sql,"update usrinfo set phone = '%s' where staffno = %d;",msg->info.phone, msg->info.no);
+		printf("sql:%s\n",sql);
+		break;
+	case 4:
+		sprintf(sql,"update usrinfo set addr = '%s' where staffno = %d;",msg->info.addr, msg->info.no);
+		printf("sql:%s\n",sql);
+		break;
+	}
+
+	if(sqlite3_exec(db,sql,NULL,NULL,&errmsg) != SQLITE_OK){
+		printf("%s\n",errmsg);
+		return -1;
+	}
+	else{
+		printf("update success\n");
+		strcpy(msg->recvmsg,"OK");
+		msg->flags = 0;
+		//return 0;
+	}
+	if(send(acceptfd,msg,sizeof(MSG),0) <0){
+		perror("server send failed\n");
+		return -1;
+	}
 	return 0;
 }
 
@@ -72,7 +107,7 @@ int process_user_query_request(int acceptfd,MSG *msg)
 	char *errmsg;
 	char **result;
 	int nrow,ncolumn;
-	int i,j,num = 0;
+//	int i,j,num = 0;
 
 	sprintf(sql,"select * from usrinfo where name = '%s' and passwd = '%s';"\
 			,msg->info.name,msg->info.passwd);

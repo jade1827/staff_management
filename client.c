@@ -54,7 +54,7 @@ void do_admin_modification(int sockfd,MSG *msg)//管理员修改
  ****************************************/
 void do_admin_adduser(int sockfd,MSG *msg)//管理员添加用户
 {		
-//	printf("------------%s-----------%d.\n",__func__,__LINE__);
+	//	printf("------------%s-----------%d.\n",__func__,__LINE__);
 
 	msg->msgtype = ADMIN_ADDUSER;
 	msg->usertype = ADMIN;
@@ -63,7 +63,7 @@ void do_admin_adduser(int sockfd,MSG *msg)//管理员添加用户
 	printf("please infut staff nomber:\n");
 	scanf("%d",&(msg->info.no));
 	getchar();
-	
+
 	printf("please infut usertypr:(admin:1 user:2)\n");
 	scanf("%d",&(msg->info.usertype));
 	getchar();
@@ -79,7 +79,7 @@ void do_admin_adduser(int sockfd,MSG *msg)//管理员添加用户
 	printf("please input age:\n");
 	scanf("%d",&(msg->info.age));
 	getchar();
-	
+
 	printf("please input user phonenum:\n");
 	scanf("%s",msg->info.phone);
 	getchar();
@@ -127,7 +127,7 @@ void do_admin_adduser(int sockfd,MSG *msg)//管理员添加用户
  ****************************************/
 void do_admin_deluser(int sockfd,MSG *msg)//管理员删除用户
 {
-//	printf("------------%s-----------%d.\n",__func__,__LINE__);
+	//	printf("------------%s-----------%d.\n",__func__,__LINE__);
 
 }
 
@@ -166,28 +166,28 @@ void admin_menu(int sockfd,MSG *msg)
 
 		switch(n)
 		{
-			case 1:
-				do_admin_query(sockfd,msg);
-				break;
-			case 2:
-				do_admin_modification(sockfd,msg);
-				break;
-			case 3:
-				do_admin_adduser(sockfd,msg);
-				break;
-			case 4:
-				do_admin_deluser(sockfd,msg);
-				break;
-			case 5:
-				do_admin_history(sockfd,msg);
-				break;
-			case 6:
-				msg->msgtype = QUIT;
-				send(sockfd, msg, sizeof(MSG), 0);
-				close(sockfd);
-				exit(0);
-			default:
-				printf("您输入有误，请重新输入！\n");
+		case 1:
+			do_admin_query(sockfd,msg);
+			break;
+		case 2:
+			do_admin_modification(sockfd,msg);
+			break;
+		case 3:
+			do_admin_adduser(sockfd,msg);
+			break;
+		case 4:
+			do_admin_deluser(sockfd,msg);
+			break;
+		case 5:
+			do_admin_history(sockfd,msg);
+			break;
+		case 6:
+			msg->msgtype = QUIT;
+			send(sockfd, msg, sizeof(MSG), 0);
+			close(sockfd);
+			exit(0);
+		default:
+			printf("您输入有误，请重新输入！\n");
 		}
 	}
 }
@@ -232,8 +232,85 @@ void do_user_query(int sockfd,MSG *msg)
  ****************************************/
 void do_user_modification(int sockfd,MSG *msg)
 {
-	printf("------------%s-----------%d.\n",__func__,__LINE__);
-
+	msg->msgtype = USER_MODIFY;
+	msg->usertype = USER;
+	msg->flags = 0;
+	//printf("------------%s-----------%d.\n",__func__,__LINE__);
+	printf("please input your staffnum:\n");
+	scanf("%d",&(msg->info.no));
+	getchar();
+	printf("please select which one you want to moddify:\n");
+	printf("================================================\n");
+	printf("--1.password--2.age--3.phone--4.addr--\n");
+	printf("================================================\n");
+	int num;
+	scanf("%d",&num);
+	getchar();
+	
+		switch(num){
+		case 1:
+			printf("please input new psw:\n");
+			scanf("%s",msg->info.passwd);
+			getchar();
+			msg->flags = 1;
+			if((send(sockfd,msg,sizeof(MSG),0)) < 0){
+				perror("failed to send pwd----user update\n");
+			}
+			if(recv(sockfd,msg,sizeof(MSG),0) < 0){
+				perror("failed reveive from serve --- user update\n");
+			}
+			if(msg->flags == 0){
+				printf("update %s----new pwd:%s\n",msg->recvmsg,msg->info.passwd);
+			}
+			break;
+		case 2:
+			printf("please input new age:\n");
+			scanf("%d",&(msg->info.age));
+			getchar();
+			msg->flags = 2;
+			if((send(sockfd,msg,sizeof(MSG),0)) < 0){
+				perror("failed to send age----user update\n");
+			}
+			if(recv(sockfd,msg,sizeof(MSG),0) < 0){
+				perror("failed reveive from serve --- user update\n");
+			}
+			if(msg->flags == 0){
+				printf("update %s----new age:%d\n",msg->recvmsg,msg->info.age);
+			}
+			break;
+		case 3:
+			printf("please input new phonenum:\n");
+			scanf("%s",msg->info.phone);
+			getchar();
+			msg->flags = 3;
+			if((send(sockfd,msg,sizeof(MSG),0)) < 0){
+				perror("failed to send phone----user update\n");
+			}
+			if(recv(sockfd,msg,sizeof(MSG),0) < 0){
+				perror("failed reveive from serve --- user update\n");
+			}
+			if(msg->flags == 0){
+				printf("update %s----new phone:%s\n",msg->recvmsg,msg->info.phone);
+			}
+			break;
+		case 4:
+			printf("please input new addr:\n");
+			scanf("%s",msg->info.addr);
+			getchar();
+			msg->flags = 4;
+			if((send(sockfd,msg,sizeof(MSG),0)) < 0){
+				perror("failed to send addr----user update\n");
+			}
+			if(recv(sockfd,msg,sizeof(MSG),0) < 0){
+				perror("failed reveive from serve --- user update\n");
+			}
+			if(msg->flags == 0){
+				printf("update %s----new addr:%s\n",msg->recvmsg,msg->info.addr);
+			}
+			break;
+		default:
+			printf("input error\n");
+		}
 }
 
 
@@ -257,20 +334,20 @@ void user_menu(int sockfd,MSG *msg)
 
 		switch(n)
 		{
-			case 1:
-				do_user_query(sockfd,msg);
-				break;
-			case 2:
-				do_user_modification(sockfd,msg);
-				break;
-			case 3:
-				msg->msgtype = QUIT;
-				send(sockfd, msg, sizeof(MSG), 0);
-				close(sockfd);
-				exit(0);
-			default:
-				printf("您输入有误，请输入数字\n");
-				break;
+		case 1:
+			do_user_query(sockfd,msg);
+			break;
+		case 2:
+			do_user_modification(sockfd,msg);
+			break;
+		case 3:
+			msg->msgtype = QUIT;
+			send(sockfd, msg, sizeof(MSG), 0);
+			close(sockfd);
+			exit(0);
+		default:
+			printf("您输入有误，请输入数字\n");
+			break;
 		}
 	}
 }
@@ -343,25 +420,25 @@ int do_login(int sockfd)
 
 		switch(n)
 		{
-			case 1:
-				msg.msgtype  = ADMIN_LOGIN;
-				msg.usertype = ADMIN;
-				break;
-			case 2:
-				msg.msgtype =  USER_LOGIN;
-				msg.usertype = USER;
-				break;
-			case 3:
-				msg.msgtype = QUIT;
-				if(send(sockfd, &msg, sizeof(MSG), 0)<0)
-				{
-					perror("do_login send");
-					return -1;
-				}
-				close(sockfd);
-				exit(0);
-			default:
-				printf("您的输入有误，请重新输入\n"); 
+		case 1:
+			msg.msgtype  = ADMIN_LOGIN;
+			msg.usertype = ADMIN;
+			break;
+		case 2:
+			msg.msgtype =  USER_LOGIN;
+			msg.usertype = USER;
+			break;
+		case 3:
+			msg.msgtype = QUIT;
+			if(send(sockfd, &msg, sizeof(MSG), 0)<0)
+			{
+				perror("do_login send");
+				return -1;
+			}
+			close(sockfd);
+			exit(0);
+		default:
+			printf("您的输入有误，请重新输入\n"); 
 		}
 
 		admin_or_user_login(sockfd,&msg);
@@ -393,8 +470,8 @@ int main(int argc, const char *argv[])
 	memset(&serveraddr,0,sizeof(serveraddr));
 	memset(&clientaddr,0,sizeof(clientaddr));
 	serveraddr.sin_family = AF_INET;
-//	serveraddr.sin_port   = htons(atoi(argv[2]));
-//	serveraddr.sin_addr.s_addr = inet_addr(argv[1]);
+	//	serveraddr.sin_port   = htons(atoi(argv[2]));
+	//	serveraddr.sin_addr.s_addr = inet_addr(argv[1]);
 	serveraddr.sin_port   = htons(5001);
 	serveraddr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
