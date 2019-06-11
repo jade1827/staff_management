@@ -64,8 +64,21 @@ void do_admin_adduser(int sockfd,MSG *msg)//管理员添加用户
  ****************************************/
 void do_admin_deluser(int sockfd,MSG *msg)//管理员删除用户
 {
-	printf("------------%s-----------%d.\n",__func__,__LINE__);
-
+//	printf("------------%s-----------%d.\n",__func__,__LINE__);
+ // printf("请输入员工号\n");
+ // scanf("%d",msg->info.no);
+  printf("请输入要删除的名字\n");
+  scanf("%s",msg->info.name);
+ if(send(sockfd,msg,sizeof(MSG),0)<0)
+ {
+	 printf("failed to send\n");
+	 //return -1;
+ }
+ if(recv(sockfd,msg,sizeof(MSG),0)<0)
+ {
+	 printf("failed to recv\n");
+	// return -1;
+ }
 }
 
 
@@ -315,10 +328,10 @@ int main(int argc, const char *argv[])
 	memset(&serveraddr,0,sizeof(serveraddr));
 	memset(&clientaddr,0,sizeof(clientaddr));
 	serveraddr.sin_family = AF_INET;
-//	serveraddr.sin_port   = htons(atoi(argv[2]));
-//	serveraddr.sin_addr.s_addr = inet_addr(argv[1]);
-	serveraddr.sin_port   = htons(5001);
-	serveraddr.sin_addr.s_addr = inet_addr("192.168.1.200");
+	serveraddr.sin_port   = htons(atoi(argv[2]));
+	serveraddr.sin_addr.s_addr = inet_addr(argv[1]);
+//	serveraddr.sin_port   = htons(5001);
+//	serveraddr.sin_addr.s_addr = inet_addr("192.168.1.200");
 
 	if(connect(sockfd,(const struct sockaddr *)&serveraddr,addrlen) == -1){
 		perror("connect failed.\n");

@@ -90,8 +90,17 @@ int process_admin_deluser_request(int acceptfd,MSG *msg)
 {
 	printf("------------%s-----------%d.\n",__func__,__LINE__);
 
-}
+	char sql[DATALEN] = {0};
+	char *errmsg;
+	char **result;
+	int nrow,ncolumn;
+  //  strcpy(msg->username);
+	sprintf(sql,"select * from usrinfo where username='%s';",msg->info.name);
+	if(sqlite3_exec(db,sql,NULL,NULL,&errmsg) != SQLITE_OK){
+		printf("---****----%s.\n",errmsg);
 
+}
+}
 
 int process_admin_query_request(int acceptfd,MSG *msg)
 {
@@ -109,8 +118,9 @@ int process_admin_history_request(int acceptfd,MSG *msg)
 int process_client_quit_request(int acceptfd,MSG *msg)
 {
 	printf("------------%s-----------%d.\n",__func__,__LINE__);
-
+//printf("peer shutdown\n");
 }
+
 
 
 int process_client_request(int acceptfd,MSG *msg)
@@ -166,6 +176,8 @@ int main(int argc, const char *argv[])
 	socklen_t addrlen = sizeof(serveraddr);
 	socklen_t cli_len = sizeof(clientaddr);
 
+   // pid_t pid;
+
 	MSG msg;
 	//thread_data_t tid_data;
 	char *errmsg;
@@ -205,10 +217,10 @@ int main(int argc, const char *argv[])
 	memset(&serveraddr,0,sizeof(serveraddr));
 	memset(&clientaddr,0,sizeof(clientaddr));
 	serveraddr.sin_family = AF_INET;
-//	serveraddr.sin_port   = htons(atoi(argv[2]));
-//	serveraddr.sin_addr.s_addr = inet_addr(argv[1]);
-	serveraddr.sin_port   = htons(5001);
-	serveraddr.sin_addr.s_addr = inet_addr("192.168.1.200");
+	serveraddr.sin_port   = htons(atoi(argv[2]));
+	serveraddr.sin_addr.s_addr = inet_addr(argv[1]);
+//	serveraddr.sin_port   = htons();
+//	serveraddr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
 
 	//绑定网络套接字和网络结构体
@@ -222,7 +234,31 @@ int main(int argc, const char *argv[])
 		printf("listen failed.\n");
 		exit(-1);
 	}
-
+#if 0	//处理僵尸进程
+	signal(SIGCHLD,SIG_IGN);
+	while(1)
+	{
+		if((acceptfd=accept(sockfd,NULL,NULL))<0)
+		{
+			perror("fail to accept");
+			return -1;
+		}
+		if((pid=fork())<0)
+		{
+			perror("fail to fork");
+			return -1;
+		}
+		else if(pid==0)
+		{
+			//处理客户端具体的消息
+		close(sockfd);
+		process_client_request();
+		}
+		else{
+			//父亲进程，用来接受客户端的请求
+		close(acceptfd);
+			}
+#endif
 	//定义一张表
 	fd_set readfds,tempfds;
 	//清空表
