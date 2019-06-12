@@ -192,6 +192,20 @@ void do_admin_deluser(int sockfd,MSG *msg)//管理员删除用户
 void do_admin_history (int sockfd,MSG *msg)
 {
 	//printf("------------%s-----------%d.\n",__func__,__LINE__);
+	msg->msgtype=ADMIN_HISTORY;
+	send(sockfd,msg,sizeof(MSG),0);
+	printf("time       name       words\n");
+	printf("=============================\n");
+	while(1){
+		recv(sockfd,msg,sizeof(MSG),0);
+		if(msg->flags == 1){
+			memset(msg->recvmsg,0,sizeof(msg->recvmsg));
+			break;
+		}
+		printf("%s  %s  %s\n",msg->info.date,msg->username,msg->recvmsg);
+	}
+	return;
+#if 0
 	msg->msgtype = ADMIN_HISTORY;
 	msg->flags = 0;
 	if ((send(sockfd,msg,sizeof(MSG),0)) < 0){
@@ -202,6 +216,8 @@ void do_admin_history (int sockfd,MSG *msg)
 		recv(sockfd,msg,sizeof(MSG),0);
 		printf("msg->info:%s\n",msg->info.date);
 	}
+#endif
+
 }
 
 
@@ -244,7 +260,7 @@ void admin_menu(int sockfd,MSG *msg)
 		case 6:
 			msg->msgtype = QUIT;
 			send(sockfd, msg, sizeof(MSG), 0);
-			break;
+			do_login(sockfd);
 			//close(sockfd);
 			//exit(0);
 		default:

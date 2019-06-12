@@ -125,7 +125,7 @@ int process_client_quit_request(int acceptfd,MSG *msg);
 int process_client_request(int acceptfd,MSG *msg);
 
 //insert table hostoryinfo
-void historyinfo_insert(MSG * msg);
+void historyinfo_insert(MSG * msg,char * words);
 
 
 #endif

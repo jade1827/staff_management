@@ -311,8 +311,32 @@ int process_admin_query_request(int acceptfd,MSG *msg)
 int process_admin_history_request(int acceptfd,MSG *msg)
 {
 
-	char sql[DATALEN] = {0};
+	char sql[DATALEN]={0};
 	char *errmsg;
+	char **result;
+	int nrow,ncolumn;
+	int i;
+	msg->flags = 0;
+	sprintf(sql,"select * from historyinfo;");
+	if(sqlite3_get_table(db,sql,&result,&nrow,&ncolumn,&errmsg)!=SQLITE_OK)	{
+		printf("---****----%s.\n",errmsg);		
+	}else{
+		int num=ncolumn;
+		for(i=0;i<nrow;i++){
+			strcpy(msg->info.date,result[num]);
+			strcpy(msg->username,(char *)result[num+1]);
+			strcpy(msg->recvmsg,(char *)result[num+2]);
+			send(acceptfd,msg,sizeof(MSG),0);
+			num=num+3;
+		}
+		msg->flags = 1;
+		send(acceptfd,msg,sizeof(MSG),0);
+		memset(msg->recvmsg,0,sizeof(msg->recvmsg));
+	}
+	return 0;
+#if 0	
+	char *errmsg;
+	char sql[DATALEN] = {0};
 	char **result;
 
 	sprintf(sql,"select * from historyinfo;");
@@ -336,7 +360,7 @@ int process_admin_history_request(int acceptfd,MSG *msg)
 		printf("server failed to send ---ADMIN_HISTROY_QUERY\n");
 	}
 	return 0;
-
+#endif
 }
 
 
@@ -359,37 +383,37 @@ int process_client_request(int acceptfd,MSG *msg)
 		case USER_LOGIN:
 		case ADMIN_LOGIN:
 			process_user_or_admin_login_request(acceptfd,msg);
-			historyinfo_insert(msg);
+			historyinfo_insert(msg,"LOGIN");
 			break;
 		case USER_MODIFY:
 			process_user_modify_request(acceptfd,msg);
-			historyinfo_insert(msg);
+			historyinfo_insert(msg,"USER_MODIFY");
 			break;
 		case USER_QUERY:
 			process_user_query_request(acceptfd,msg);
-			historyinfo_insert(msg);
+			historyinfo_insert(msg,"USER_QUERY");
 			break;
 		case ADMIN_MODIFY:
 			process_admin_modify_request(acceptfd,msg);
-			historyinfo_insert(msg);
+			historyinfo_insert(msg,"ADMIN_MODIFY");
 			break;
 
 		case ADMIN_ADDUSER:
 			process_admin_adduser_request(acceptfd,msg);
-			historyinfo_insert(msg);
+			historyinfo_insert(msg,"ADMIN_ADDUSER");
 			break;
 
 		case ADMIN_DELUSER:
 			process_admin_deluser_request(acceptfd,msg);
-			historyinfo_insert(msg);
+			historyinfo_insert(msg,"ADMIN_DELUSER");
 			break;
 		case ADMIN_QUERY:
 			process_admin_query_request(acceptfd,msg);
-			historyinfo_insert(msg);
+			historyinfo_insert(msg,"ADMIN_QUERY");
 			break;
 		case ADMIN_HISTORY:
 			process_admin_history_request(acceptfd,msg);
-			historyinfo_insert(msg);
+			historyinfo_insert(msg,"ADMIN_HISTORY");
 			break;
 		case QUIT:
 			process_client_quit_request(acceptfd,msg);
@@ -400,7 +424,7 @@ int process_client_request(int acceptfd,MSG *msg)
 
 }
 
-void historyinfo_insert(MSG * msg){
+void historyinfo_insert(MSG * msg,char * words){
 
 	time_t now;
 	struct tm *tm_now;
@@ -412,8 +436,8 @@ void historyinfo_insert(MSG * msg){
 	tm_now->tm_hour,tm_now->tm_min,tm_now->tm_sec);
 	char * errmsg;
 	char sql[DATALEN]={0};
-	sprintf(sql,"insert into historyinfo values ('%s','%s',%d);",\
-			date, msg->username, msg->usertype);
+	sprintf(sql,"insert into historyinfo values ('%s','%s','%s');",\
+			date, msg->username, words);
 	if((sqlite3_exec(db,sql,NULL,NULL,&errmsg))!=SQLITE_OK){
 		printf("history failed -- %s\n",errmsg);
 	}
