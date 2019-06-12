@@ -75,6 +75,29 @@ int process_admin_modify_request(int acceptfd,MSG *msg)
 {
 	printf("------------%s-----------%d.\n",__func__,__LINE__);
 
+	char sql[DATALEN]={0};
+	char *errmsg;
+	recv(acceptfd,msg,sizeof(MSG),0);
+	switch(msg->flags)
+	{
+		case 1:
+			sprintf(sql,"update usrinfo set usertype=%d where staffno=%d;",
+					msg->info.usertype,msg->info.no);
+			printf("sql:%s\n",sql);
+			break;
+		case 2:
+			sprintf(sql,"update usrinfo set name='%s' where staffno=%d;",
+					msg->info.name,msg->info.no);
+			printf("sql:%s\n",sql);
+			break;
+	}
+		if(sqlite3_exec(db,sql,NULL,NULL,&errmsg)!=SQLITE_OK){
+			printf("----****----%s.\n",errmsg);
+			return -1;
+		}else{
+			printf("update usertype ok.\n");
+		}
+	return 0;
 }
 
 
@@ -82,6 +105,20 @@ int process_admin_adduser_request(int acceptfd,MSG *msg)
 {
 	printf("------------%s-----------%d.\n",__func__,__LINE__);
 
+	char sql[DATALEN]={0};
+	char *errmsg;
+	recv(acceptfd,msg,sizeof(MSG),0);
+	sprintf(sql,"insert into usrinfo values (%d,%d,'%s','%s',%d,'%s','%s','%s','%s',%d,%lf);",msg->info.no,msg->info.usertype,msg->info.name,
+		msg->info.passwd,msg->info.age,msg->info.phone,msg->info.addr,msg->info.work,
+		msg->info.date,msg->info.level,msg->info.salary);
+	printf("%s\n",sql);
+	if(sqlite3_exec(db,sql,NULL,NULL,&errmsg)!=SQLITE_OK){
+		printf("----****----%s.\n",errmsg);
+		return -1;
+	}else{
+		printf("adduser successful\n");
+	}
+	return 0;
 }
 
 
@@ -97,6 +134,37 @@ int process_admin_query_request(int acceptfd,MSG *msg)
 {
 	printf("------------%s-----------%d.\n",__func__,__LINE__);
 
+	char sql[DATALEN]={0};
+	char *errmsg;
+	char **result;
+	int nrow,ncolumn;
+	int i;
+	sprintf(sql,"select * from usrinfo;");
+	if(sqlite3_get_table(db,sql,&result,&nrow,&ncolumn,&errmsg)!=SQLITE_OK)	{
+		printf("---****----%s.\n",errmsg);		
+	}else{
+		int num=ncolumn;
+		for(i=0;i<nrow;i++){
+			msg->info.no=atoi(result[num]);
+			msg->info.usertype=atoi(result[num+1]);
+			strcpy(msg->info.name,(char *)result[num+2]);
+			strcpy(msg->info.passwd,(char *)result[num+3]);
+			msg->info.age=atoi(result[num+4]);
+			strcpy(msg->info.phone,(char *)result[num+5]);
+			strcpy(msg->info.addr,(char *)result[num+6]);
+			strcpy(msg->info.work,(char *)result[num+7]);
+			strcpy(msg->info.date,(char *)result[num+8]);
+			msg->info.level=atoi(result[num+9]);
+			msg->info.salary=atoi(result[num+10]);
+			send(acceptfd,msg,sizeof(MSG),0);
+			num=num+11;
+		}
+		strcpy(msg->recvmsg,"seek ok");
+		send(acceptfd,msg,sizeof(MSG),0);
+		memset(msg->recvmsg,0,sizeof(msg->recvmsg));
+	}
+	return 0;
+ 
 }
 
 int process_admin_history_request(int acceptfd,MSG *msg)
@@ -205,10 +273,10 @@ int main(int argc, const char *argv[])
 	memset(&serveraddr,0,sizeof(serveraddr));
 	memset(&clientaddr,0,sizeof(clientaddr));
 	serveraddr.sin_family = AF_INET;
-//	serveraddr.sin_port   = htons(atoi(argv[2]));
-//	serveraddr.sin_addr.s_addr = inet_addr(argv[1]);
-	serveraddr.sin_port   = htons(5001);
-	serveraddr.sin_addr.s_addr = inet_addr("192.168.1.200");
+	serveraddr.sin_port   = htons(atoi(argv[2]));
+	serveraddr.sin_addr.s_addr = inet_addr(argv[1]);
+//	serveraddr.sin_port   = htons(5001);
+//	serveraddr.sin_addr.s_addr = inet_addr("192.168.1.200");
 
 
 	//绑定网络套接字和网络结构体

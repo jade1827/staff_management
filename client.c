@@ -28,10 +28,22 @@ void do_admin_query(int sockfd,MSG *msg)
 {
 	printf("------------%s-----------%d.\n",__func__,__LINE__);
 
+	msg->msgtype=ADMIN_QUERY;
+	send(sockfd,msg,sizeof(MSG),0);
+	printf("staffno  usertype   name  passwd  age   phone	addr   work  date  level  salary\n");
+	printf("=====================================================================================\n");
+	while(1){
+		recv(sockfd,msg,sizeof(MSG),0);
+		if(strncmp(msg->recvmsg,"seek ok",7)==0){
+			memset(msg->recvmsg,0,sizeof(msg->recvmsg));
+			break;
+		}
+		printf("%d  %d  %s  %s %d %s %s  %s  %s  %d %lf \n",msg->info.no,msg->info.usertype,
+				msg->info.name,msg->info.passwd,msg->info.age,msg->info.phone,
+				msg->info.addr,msg->info.work,msg->info.date,msg->info.level,msg->info.salary);
 
-
+	}
 }
-
 
 /**************************************
  *函数名：admin_modification
@@ -41,8 +53,49 @@ void do_admin_query(int sockfd,MSG *msg)
 void do_admin_modification(int sockfd,MSG *msg)//管理员修改
 {
 	printf("------------%s-----------%d.\n",__func__,__LINE__);
-
-
+	
+	int n;
+	msg->msgtype=ADMIN_MODIFY;
+	printf("input modified staffno>>");
+	scanf("%d",&msg->info.no);
+	printf("*************************************************************\n");
+	printf("* 1：usertype  2：name 3：passwd  4：age  5：phone  6:addr  *\n");
+	printf("* 6：exit													*\n");
+	printf("*************************************************************\n");
+	printf("input choice your number>>");
+	scanf("%d",&n);
+	switch(n)
+	{
+		case 1:
+			msg->flags=1;
+			printf("input new usertype>>");
+			scanf("%d",&msg->info.usertype);
+			getchar();
+			send(sockfd,msg,sizeof(MSG),0);
+			printf("usertype modify success.\n");
+			break;
+		case 2:
+			msg->flags=2;
+			printf("input new name>>");
+			scanf("%s",msg->info.name);
+			getchar();
+			send(sockfd,msg,sizeof(MSG),0);
+			printf("name modify success.\n");
+			break;
+		case 3:
+			break;
+		case 4:
+			break;
+		case 5:
+			break;
+		case 6:
+			msg->msgtype=QUIT;
+			send(sockfd,msg,sizeof(MSG),0);
+			close(sockfd);
+			exit(0);
+		default:
+			printf("try again.\n");
+	}
 }
 
 
@@ -54,6 +107,55 @@ void do_admin_modification(int sockfd,MSG *msg)//管理员修改
 void do_admin_adduser(int sockfd,MSG *msg)//管理员添加用户
 {		
 	printf("------------%s-----------%d.\n",__func__,__LINE__);
+
+	msg->msgtype=ADMIN_ADDUSER;
+	send(sockfd,msg,sizeof(MSG),0);
+
+	printf("add to staffno>>");
+	scanf("%d",&msg->info.no);
+	getchar();
+	
+	printf("add to usertype>>");
+	scanf("%d",&msg->info.usertype);
+	getchar();
+
+	printf("add to name>>");
+	scanf("%s",msg->info.name);
+	getchar();
+
+	printf("add to passwd>>");
+	scanf("%s",msg->info.passwd);
+	getchar();
+
+	printf("add to age>>");
+	scanf("%d",&msg->info.age);
+	getchar();
+
+	printf("add to phone>>");
+	scanf("%s",msg->info.phone);
+	getchar();
+
+	printf("add to addr>>");
+	scanf("%s",msg->info.addr);
+	getchar();
+
+	printf("add to work>>");
+	scanf("%s",msg->info.work);
+	getchar();
+
+	printf("add to date>>");
+	scanf("%s",msg->info.date);
+	getchar();
+
+	printf("add to level>>");
+	scanf("%d",&msg->info.level);
+	getchar();
+
+	printf("add to salary>>");
+	scanf("%lf",&msg->info.salary);
+	getchar();
+	
+	send(sockfd,msg,sizeof(MSG),0);
 }
 
 
@@ -315,10 +417,10 @@ int main(int argc, const char *argv[])
 	memset(&serveraddr,0,sizeof(serveraddr));
 	memset(&clientaddr,0,sizeof(clientaddr));
 	serveraddr.sin_family = AF_INET;
-//	serveraddr.sin_port   = htons(atoi(argv[2]));
-//	serveraddr.sin_addr.s_addr = inet_addr(argv[1]);
-	serveraddr.sin_port   = htons(5001);
-	serveraddr.sin_addr.s_addr = inet_addr("192.168.1.200");
+	serveraddr.sin_port   = htons(atoi(argv[2]));
+	serveraddr.sin_addr.s_addr = inet_addr(argv[1]);
+//	serveraddr.sin_port   = htons(5001);
+//	serveraddr.sin_addr.s_addr = inet_addr("192.168.1.200");
 
 	if(connect(sockfd,(const struct sockaddr *)&serveraddr,addrlen) == -1){
 		perror("connect failed.\n");
