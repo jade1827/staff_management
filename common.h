@@ -97,7 +97,39 @@ typedef struct thread_node{
 }linklist, *plinklist;
 
 
-//declear all function 
-void admin_menu(int, MSG *);
+//declear all function
+ 
+//client
+void do_admin_query(int sockfd,MSG *msg);
+void do_admin_modification(int sockfd,MSG *msg);
+void do_admin_adduser(int sockfd,MSG *msg);
+void do_admin_deluser(int sockfd,MSG *msg);
+void do_admin_history (int sockfd,MSG *msg);
+void admin_menu(int sockfd,MSG *msg);
+void do_user_query(int sockfd,MSG *msg);
+void do_user_modification(int sockfd,MSG *msg);
+void user_menu(int sockfd,MSG *msg);
+int admin_or_user_login(int sockfd,MSG *msg);
+int do_login(int sockfd);
+
+//server
+int process_user_or_admin_login_request(int acceptfd,MSG *msg);
+int process_user_modify_request(int acceptfd,MSG *msg);
+int process_user_query_request(int acceptfd,MSG *msg);
+int process_admin_modify_request(int acceptfd,MSG *msg);
+int process_admin_adduser_request(int acceptfd,MSG *msg);
+int process_admin_deluser_request(int acceptfd,MSG *msg);
+int process_admin_query_request(int acceptfd,MSG *msg);
+int process_admin_history_request(int acceptfd,MSG *msg);
+int process_client_quit_request(int acceptfd,MSG *msg);
+int process_client_request(int acceptfd,MSG *msg);
+
+//insert table hostoryinfo
+void historyinfo_insert(MSG * msg);
+
+
+
+
+
 #endif
 
