@@ -1,8 +1,8 @@
 /*************************************************************************
 #	 FileName	: server.c
-#	 Author		: fengjunhui 
-#	 Email		: 18883765905@163.com 
-#	 Created	: 2018年12月29日 星期六 13时44分59秒
+#	 Author		: group
+#	 Email		: group@gmail.com
+#	 Created	: 2019年06月12日 
  ************************************************************************/
 
 #include<stdio.h>
@@ -106,7 +106,7 @@ int process_user_query_request(int acceptfd,MSG *msg)
 	char sql[DATALEN] = {0};
 	char *errmsg;
 	char **result;
-	int nrow,ncolumn;
+//	int nrow,ncolumn;
 //	int i,j,num = 0;
 
 	sprintf(sql,"select * from usrinfo where name = '%s' and passwd = '%s';"\
@@ -218,7 +218,6 @@ int process_admin_modify_request(int acceptfd,MSG *msg)
 	strcpy(msg->recvmsg,"modify ok");
 	send(acceptfd,msg,sizeof(MSG),0);
 
-
 	return 0;
 
 }
@@ -243,7 +242,6 @@ int process_admin_adduser_request(int acceptfd,MSG *msg)
 		printf("ADMIN_ADDUSER success\n");
 		strcpy(msg->recvmsg,"ADMIN_ADDUSER");
 		msg->flags = 1;
-		//return 0;
 	}
 
 	if(send(acceptfd,msg,sizeof(MSG),0) <0){
@@ -303,13 +301,11 @@ int process_admin_query_request(int acceptfd,MSG *msg)
 			send(acceptfd,msg,sizeof(MSG),0);
 			num=num+11;
 		}
-		strcpy(msg->recvmsg,"seek ok");
+		strcpy(msg->recvmsg,"ADMIN_QUERY");
 		send(acceptfd,msg,sizeof(MSG),0);
 		memset(msg->recvmsg,0,sizeof(msg->recvmsg));
 	}
 	return 0;
- 
-
 }
 
 int process_admin_history_request(int acceptfd,MSG *msg)
@@ -318,35 +314,26 @@ int process_admin_history_request(int acceptfd,MSG *msg)
 	char sql[DATALEN] = {0};
 	char *errmsg;
 	char **result;
-	int nrow,ncolumn;
 
-	sprintf(sql,"select * from historyinfo order by date desc;");
+	sprintf(sql,"select * from historyinfo;");
 	printf("sql:%s\n",sql);
 	
 	int callback(void * para,int f_num,char ** f_value, char **f_name){
-		for(i= 0; i<f_num;i++){
-			printf("%s\t",f_value[i]);
-		}
-		printf("\n");
-			msg->info.no = atoi(f_value[0]);
-			msg->info.usertype = atoi(f_value[1]);
-			strcpy(msg->info.name,f_value[2]);
-			strcpy(msg->info.passwd ,f_value[3]);
-			msg->info.age = atoi(f_value[4]);
-			strcpy(msg->info.phone , f_value[5]);
-			strcpy(msg->info.addr , f_value[6]);
-			strcpy(msg->info.work , f_value[7]);
-			strcpy(msg->info.date ,f_value[8]);
-			msg->info.level = atoi(f_value[9]);
-			msg->info.salary = atoi(f_value[10]);
+		
+			strcpy(msg->info.date, f_value[0]);
+			strcpy(msg->username ,f_value[1]);
+			strcpy(msg->recvmsg , f_value[2]);
+			send(acceptfd,msg,sizeof(MSG),0);
+
 	}
-	if((sqlite3_exec(db,sql,callback,"select",&errmsg))!= SQLITE_OK){		
+
+	if((sqlite3_exec(db,sql,callback,"QH",&errmsg))!= SQLITE_OK){
+		msg->flags = 1;
+		send(acceptfd,msg,sizeof(MSG),0);
 		printf("%s --failed to select table ---- USER_QUERY",errmsg);
 	}
-	msg->flags = 1;
-
 	if((send(acceptfd,msg,sizeof(MSG),0)) < 0){
-		printf("server failed to send ---USER_QUERY\n");
+		printf("server failed to send ---ADMIN_HISTROY_QUERY\n");
 	}
 	return 0;
 
@@ -425,7 +412,7 @@ void historyinfo_insert(MSG * msg){
 	tm_now->tm_hour,tm_now->tm_min,tm_now->tm_sec);
 	char * errmsg;
 	char sql[DATALEN]={0};
-	sprintf(sql,"insert into historyinfo values ('%s','%s','%s');",\
+	sprintf(sql,"insert into historyinfo values ('%s','%s',%d);",\
 			date, msg->username, msg->usertype);
 	if((sqlite3_exec(db,sql,NULL,NULL,&errmsg))!=SQLITE_OK){
 		printf("history failed -- %s\n",errmsg);

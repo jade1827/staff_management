@@ -1,8 +1,8 @@
 /*************************************************************************
-#	 FileName	: server.c
-#	 Author		: fengjunhui 
-#	 Email		: 18883765905@163.com 
-#	 Created	: 2018年12月29日 星期六 13时44分59秒
+#	 FileName	: client.c
+#	 Author		: group
+#	 Email		: group@gmail.com
+#	 Created	: 2019年06月12日
  ************************************************************************/
 
 #include<stdio.h>
@@ -35,7 +35,7 @@ void do_admin_query(int sockfd,MSG *msg)
 	printf("=====================================================================================\n");
 	while(1){
 		recv(sockfd,msg,sizeof(MSG),0);
-		if(strncmp(msg->recvmsg,"seek ok",7)==0){
+		if(strncmp(msg->recvmsg,"ADMIN_QUERY",11)==0){
 			memset(msg->recvmsg,0,sizeof(msg->recvmsg));
 			break;
 		}
@@ -44,11 +44,8 @@ void do_admin_query(int sockfd,MSG *msg)
 				msg->info.addr,msg->info.work,msg->info.date,msg->info.level,msg->info.salary);
 
 	}
-
-
-
+	return;
 }
-
 
 /**************************************
  *函数名：admin_modification
@@ -57,7 +54,7 @@ void do_admin_query(int sockfd,MSG *msg)
  ****************************************/
 void do_admin_modification(int sockfd,MSG *msg)//管理员修改
 {
-	printf("-------%s--------%d\n",__func__,__LINE__);
+//	printf("-------%s--------%d\n",__func__,__LINE__);
 //	memset(msg->msgtype,0,sizeof(int));
 	memset(msg->recvmsg,0,DATALEN);
 	memset(msg->info.name,0,NAMELEN);
@@ -79,15 +76,17 @@ void do_admin_modification(int sockfd,MSG *msg)//管理员修改
 	scanf("%s",msg->recvmsg);
 	getchar();
 
-	send(sockfd,msg,sizeof(MSG),0);
 	
-	recv(sockfd,msg,sizeof(MSG),0);
-
-	printf("%s\n",msg->recvmsg);
-
+	if((send(sockfd,msg,sizeof(MSG),0)) <0 ){
+		perror("faile to send ---- admin modify\n");
+	}
+	
+	if((recv(sockfd,msg,sizeof(MSG),0)) <0 ){
+		perror("faile to send ---- admin modify\n");
+	}else{
+		printf("%s\n",msg->recvmsg);
+	}
 	return ;
-
-
 }
 
 
@@ -194,11 +193,14 @@ void do_admin_history (int sockfd,MSG *msg)
 {
 	//printf("------------%s-----------%d.\n",__func__,__LINE__);
 	msg->msgtype = ADMIN_HISTORY;
+	msg->flags = 0;
 	if ((send(sockfd,msg,sizeof(MSG),0)) < 0){
 		printf("histroy send error\n");
 	}
-	if((recv(sockfd,msg,sizeof(MSG),0)) < 0){
-		printf("histroy reveive form server error\n");
+
+	while(msg->flags = 0){
+		recv(sockfd,msg,sizeof(MSG),0);
+		printf("msg->info:%s\n",msg->info.date);
 	}
 }
 
@@ -242,8 +244,9 @@ void admin_menu(int sockfd,MSG *msg)
 		case 6:
 			msg->msgtype = QUIT;
 			send(sockfd, msg, sizeof(MSG), 0);
-			close(sockfd);
-			exit(0);
+			break;
+			//close(sockfd);
+			//exit(0);
 		default:
 			printf("您输入有误，请重新输入！\n");
 		}
@@ -401,8 +404,10 @@ void user_menu(int sockfd,MSG *msg)
 		case 3:
 			msg->msgtype = QUIT;
 			send(sockfd, msg, sizeof(MSG), 0);
-			close(sockfd);
-			exit(0);
+			do_login(sockfd);
+		//	break;
+			//close(sockfd);
+		//	exit(0);
 		default:
 			printf("您输入有误，请输入数字\n");
 			break;

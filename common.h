@@ -128,8 +128,5 @@ int process_client_request(int acceptfd,MSG *msg);
 void historyinfo_insert(MSG * msg);
 
 
-
-
-
 #endif
 
