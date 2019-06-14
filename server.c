@@ -533,7 +533,7 @@ int main(int argc, const char *argv[])
 //	serveraddr.sin_port   = htons(atoi(argv[2]));
 //	serveraddr.sin_addr.s_addr = inet_addr(argv[1]);
 	serveraddr.sin_port   = htons(5001);
-	serveraddr.sin_addr.s_addr = inet_addr("192.168.1.200");
+	serveraddr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
 
 	//绑定网络套接字和网络结构体
