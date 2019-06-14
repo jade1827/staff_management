@@ -418,7 +418,7 @@ void user_menu(int sockfd,MSG *msg)
 			do_user_modification(sockfd,msg);
 			break;
 		case 3:
-			msg->msgtype = QUIT;
+		//	msg->msgtype = QUIT;
 			send(sockfd, msg, sizeof(MSG), 0);
 			do_login(sockfd);
 		//	break;
