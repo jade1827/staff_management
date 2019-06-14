@@ -1,8 +1,8 @@
 /*************************************************************************
 #	 FileName	: server.c
-#	 Author		: fengjunhui 
-#	 Email		: 18883765905@163.com 
-#	 Created	: 2018年12月29日 星期六 13时44分59秒
+#	 Author		: group
+#	 Email		: group@gmail.com
+#	 Created	: 2019年06月12日 
  ************************************************************************/
 
 #include<stdio.h>
@@ -106,7 +106,7 @@ int process_user_query_request(int acceptfd,MSG *msg)
 	char sql[DATALEN] = {0};
 	char *errmsg;
 	char **result;
-	int nrow,ncolumn;
+//	int nrow,ncolumn;
 //	int i,j,num = 0;
 
 	sprintf(sql,"select * from usrinfo where name = '%s' and passwd = '%s';"\
@@ -167,7 +167,57 @@ int process_user_query_request(int acceptfd,MSG *msg)
 
 int process_admin_modify_request(int acceptfd,MSG *msg)
 {
-	printf("------------%s-----------%d.\n",__func__,__LINE__);
+	char *errmsg;
+	char temp[10] = {0};
+	printf("------%s-------%d\n",__func__,__LINE__);
+	char sql[DATALEN] = {0};
+	printf("modify user: %s\n",msg->info.name);
+	switch(msg->flags)
+	{
+		case 1:
+			strcpy(temp,"staffno");
+			break;
+		case 2:
+			strcpy(temp,"usertype");
+			break;
+		case 3:
+			strcpy(temp,"name");
+			break;
+		case 4:
+			strcpy(temp,"passwd");
+			break;
+		case 5:
+			strcpy(temp,"age");
+			break;
+		case 6:
+			strcpy(temp,"phone");
+			break;
+		case 7:
+			strcpy(temp,"addr");
+			break;
+		case 8:
+			strcpy(temp,"work");
+			break;
+		case 9:
+			strcpy(temp,"date");
+			break;
+		case 10:
+			strcpy(temp,"level");
+			break;
+		case 11:
+			strcpy(temp,"salary");
+			break;
+		default:
+			printf("input error");
+	}
+
+	sprintf(sql,"update usrinfo set '%s' = '%s' where name = '%s';",temp,msg->recvmsg,msg->info.name);
+
+	if(sqlite3_exec(db,sql,NULL,NULL,&errmsg) != SQLITE_OK)
+		printf("update failed,%s\n",errmsg);
+	strcpy(msg->recvmsg,"modify ok");
+	send(acceptfd,msg,sizeof(MSG),0);
+
 	return 0;
 
 }
@@ -192,7 +242,6 @@ int process_admin_adduser_request(int acceptfd,MSG *msg)
 		printf("ADMIN_ADDUSER success\n");
 		strcpy(msg->recvmsg,"ADMIN_ADDUSER");
 		msg->flags = 1;
-		//return 0;
 	}
 
 	if(send(acceptfd,msg,sizeof(MSG),0) <0){
@@ -206,7 +255,18 @@ int process_admin_adduser_request(int acceptfd,MSG *msg)
 
 int process_admin_deluser_request(int acceptfd,MSG *msg)
 {
-	printf("------------%s-----------%d.\n",__func__,__LINE__);
+	char *errmsg;
+	printf("-------%s---------%d\n",__func__,__LINE__);
+	char sql[DATALEN] = {0};
+	printf("delete user: %s\n",msg->info.name);
+
+	sprintf(sql,"delete from usrinfo where name = '%s';",msg->info.name);
+
+	if(sqlite3_exec(db,sql,NULL,NULL,&errmsg) != SQLITE_OK)
+		printf("delete failed,%s\n",errmsg);
+
+	strcpy(msg->recvmsg,"delete ok");
+	send(acceptfd,msg,sizeof(MSG),0);
 	return 0;
 
 }
@@ -214,20 +274,93 @@ int process_admin_deluser_request(int acceptfd,MSG *msg)
 
 int process_admin_query_request(int acceptfd,MSG *msg)
 {
-	printf("------------%s-----------%d.\n",__func__,__LINE__);
-	return 0;
+	//printf("------------%s-----------%d.\n",__func__,__LINE__);
 
+	char sql[DATALEN]={0};
+	char *errmsg;
+	char **result;
+	int nrow,ncolumn;
+	int i;
+	sprintf(sql,"select * from usrinfo;");
+	if(sqlite3_get_table(db,sql,&result,&nrow,&ncolumn,&errmsg)!=SQLITE_OK)	{
+		printf("---****----%s.\n",errmsg);		
+	}else{
+		int num=ncolumn;
+		for(i=0;i<nrow;i++){
+			msg->info.no=atoi(result[num]);
+			msg->info.usertype=atoi(result[num+1]);
+			strcpy(msg->info.name,(char *)result[num+2]);
+			strcpy(msg->info.passwd,(char *)result[num+3]);
+			msg->info.age=atoi(result[num+4]);
+			strcpy(msg->info.phone,(char *)result[num+5]);
+			strcpy(msg->info.addr,(char *)result[num+6]);
+			strcpy(msg->info.work,(char *)result[num+7]);
+			strcpy(msg->info.date,(char *)result[num+8]);
+			msg->info.level=atoi(result[num+9]);
+			msg->info.salary=atoi(result[num+10]);
+			send(acceptfd,msg,sizeof(MSG),0);
+			num=num+11;
+		}
+		strcpy(msg->recvmsg,"ADMIN_QUERY");
+		send(acceptfd,msg,sizeof(MSG),0);
+		memset(msg->recvmsg,0,sizeof(msg->recvmsg));
+	}
+	return 0;
 }
 
 int process_admin_history_request(int acceptfd,MSG *msg)
 {
-	//printf("------------%s-----------%d.\n",__func__,__LINE__);
-	
-	//strcpy(msg->recvmsg,"ADMIN_HISTORY");
-	//send(acceptfd,msg,sizeof(MSG),0);
-	
-	return 0;
 
+	char sql[DATALEN]={0};
+	char *errmsg;
+	char **result;
+	int nrow,ncolumn;
+	int i;
+	msg->flags = 0;
+	sprintf(sql,"select * from historyinfo;");
+	if(sqlite3_get_table(db,sql,&result,&nrow,&ncolumn,&errmsg)!=SQLITE_OK)	{
+		printf("---****----%s.\n",errmsg);		
+	}else{
+		int num=ncolumn;
+		for(i=0;i<nrow;i++){
+			strcpy(msg->info.date,result[num]);
+			strcpy(msg->username,(char *)result[num+1]);
+			strcpy(msg->recvmsg,(char *)result[num+2]);
+			send(acceptfd,msg,sizeof(MSG),0);
+			num=num+3;
+		}
+		msg->flags = 1;
+		send(acceptfd,msg,sizeof(MSG),0);
+		memset(msg->recvmsg,0,sizeof(msg->recvmsg));
+	}
+	return 0;
+#if 0	
+	char *errmsg;
+	char sql[DATALEN] = {0};
+	char **result;
+
+	sprintf(sql,"select * from historyinfo;");
+	printf("sql:%s\n",sql);
+	
+	int callback(void * para,int f_num,char ** f_value, char **f_name){
+		
+			strcpy(msg->info.date, f_value[0]);
+			strcpy(msg->username ,f_value[1]);
+			strcpy(msg->recvmsg , f_value[2]);
+			send(acceptfd,msg,sizeof(MSG),0);
+
+	}
+
+	if((sqlite3_exec(db,sql,callback,"QH",&errmsg))!= SQLITE_OK){
+		msg->flags = 1;
+		send(acceptfd,msg,sizeof(MSG),0);
+		printf("%s --failed to select table ---- USER_QUERY",errmsg);
+	}
+	if((send(acceptfd,msg,sizeof(MSG),0)) < 0){
+		printf("server failed to send ---ADMIN_HISTROY_QUERY\n");
+	}
+	return 0;
+#endif
 }
 
 
@@ -235,6 +368,7 @@ int process_client_quit_request(int acceptfd,MSG *msg)
 {
 	//printf("------------%s-----------%d.\n",__func__,__LINE__);
 	close(acceptfd);
+	printf("Client QUIT.\n");
 	return 0;
 
 }
@@ -249,37 +383,37 @@ int process_client_request(int acceptfd,MSG *msg)
 		case USER_LOGIN:
 		case ADMIN_LOGIN:
 			process_user_or_admin_login_request(acceptfd,msg);
-			historyinfo_insert(msg);
+			historyinfo_insert(msg,"LOGIN");
 			break;
 		case USER_MODIFY:
 			process_user_modify_request(acceptfd,msg);
-			historyinfo_insert(msg);
+			historyinfo_insert(msg,"USER_MODIFY");
 			break;
 		case USER_QUERY:
 			process_user_query_request(acceptfd,msg);
-			historyinfo_insert(msg);
+			historyinfo_insert(msg,"USER_QUERY");
 			break;
 		case ADMIN_MODIFY:
 			process_admin_modify_request(acceptfd,msg);
-			historyinfo_insert(msg);
+			historyinfo_insert(msg,"ADMIN_MODIFY");
 			break;
 
 		case ADMIN_ADDUSER:
 			process_admin_adduser_request(acceptfd,msg);
-			historyinfo_insert(msg);
+			historyinfo_insert(msg,"ADMIN_ADDUSER");
 			break;
 
 		case ADMIN_DELUSER:
 			process_admin_deluser_request(acceptfd,msg);
-			historyinfo_insert(msg);
+			historyinfo_insert(msg,"ADMIN_DELUSER");
 			break;
 		case ADMIN_QUERY:
 			process_admin_query_request(acceptfd,msg);
-			historyinfo_insert(msg);
+			historyinfo_insert(msg,"ADMIN_QUERY");
 			break;
 		case ADMIN_HISTORY:
 			process_admin_history_request(acceptfd,msg);
-			historyinfo_insert(msg);
+			historyinfo_insert(msg,"ADMIN_HISTORY");
 			break;
 		case QUIT:
 			process_client_quit_request(acceptfd,msg);
@@ -288,6 +422,26 @@ int process_client_request(int acceptfd,MSG *msg)
 			break;
 	}
 
+}
+
+void historyinfo_insert(MSG * msg,char * words){
+
+	time_t now;
+	struct tm *tm_now;
+    char date[128]={'0'};
+	time(&now);
+
+	tm_now=localtime(&now);
+	sprintf(date,"%d-%d-%d %d:%d:%d",tm_now->tm_year+1900,tm_now->tm_mon+1,tm_now->tm_mday,\
+	tm_now->tm_hour,tm_now->tm_min,tm_now->tm_sec);
+	char * errmsg;
+	char sql[DATALEN]={0};
+	sprintf(sql,"insert into historyinfo values ('%s','%s','%s');",\
+			date, msg->username, words);
+	if((sqlite3_exec(db,sql,NULL,NULL,&errmsg))!=SQLITE_OK){
+		printf("history failed -- %s\n",errmsg);
+	}
+	return ;
 }
 
 
@@ -412,19 +566,6 @@ int main(int argc, const char *argv[])
 	close(sockfd);
 
 	return 0;
-}
-
-
-void historyinfo_insert(MSG * msg){
-	
-	char * errmsg;
-	char sql[DATALEN]={0};
-	sprintf(sql,"insert into historyinfo values ('%s','%s','%s');",\
-			date, msg->username, msg->usertype);
-	if((sqlite3_exec(db,sql,NULL,NULL,&errmsg))!=SQLITE_OK){
-		printf("history failed -- %s\n",errmsg);
-	}
-
 }
 
 

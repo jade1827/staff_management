@@ -1,8 +1,8 @@
 /*************************************************************************
-#	 FileName	: server.c
-#	 Author		: fengjunhui 
-#	 Email		: 18883765905@163.com 
-#	 Created	: 2018年12月29日 星期六 13时44分59秒
+#	 FileName	: client.c
+#	 Author		: group
+#	 Email		: group@gmail.com
+#	 Created	: 2019年06月12日
  ************************************************************************/
 
 #include<stdio.h>
@@ -27,12 +27,25 @@
  ****************************************/
 void do_admin_query(int sockfd,MSG *msg)
 {
-	printf("------------%s-----------%d.\n",__func__,__LINE__);
+	//printf("------------%s-----------%d.\n",__func__,__LINE__);
 
+	msg->msgtype=ADMIN_QUERY;
+	send(sockfd,msg,sizeof(MSG),0);
+	printf("staffno  usertype   name  passwd  age   phone	addr   work  date  level  salary\n");
+	printf("=====================================================================================\n");
+	while(1){
+		recv(sockfd,msg,sizeof(MSG),0);
+		if(strncmp(msg->recvmsg,"ADMIN_QUERY",11)==0){
+			memset(msg->recvmsg,0,sizeof(msg->recvmsg));
+			break;
+		}
+		printf("%d  %d  %s  %s %d %s %s  %s  %s  %d %lf \n",msg->info.no,msg->info.usertype,
+				msg->info.name,msg->info.passwd,msg->info.age,msg->info.phone,
+				msg->info.addr,msg->info.work,msg->info.date,msg->info.level,msg->info.salary);
 
-
+	}
+	return;
 }
-
 
 /**************************************
  *函数名：admin_modification
@@ -41,9 +54,39 @@ void do_admin_query(int sockfd,MSG *msg)
  ****************************************/
 void do_admin_modification(int sockfd,MSG *msg)//管理员修改
 {
-	printf("------------%s-----------%d.\n",__func__,__LINE__);
+//	printf("-------%s--------%d\n",__func__,__LINE__);
+//	memset(msg->msgtype,0,sizeof(int));
+	memset(msg->recvmsg,0,DATALEN);
+	memset(msg->info.name,0,NAMELEN);
+	memset(msg->username,0,NAMELEN);
+	msg->msgtype = ADMIN_MODIFY;
+	printf("*************************************************************************************\n");
+	printf("1.no 2.usertype 3.name 4.passwd 5.age 6.phone 7.addr 8.work 9.date 10.level 11.salary\n");
+	printf("*************************************************************************************\n");
 
+	printf("请输入修改员工的姓名：");
+	scanf("%s",msg->info.name);
+	getchar();
 
+	printf("请输入修改哪一项：");
+	scanf("%d",&msg->flags);
+	getchar();
+
+	printf("请输入修改后的值：");
+	scanf("%s",msg->recvmsg);
+	getchar();
+
+	
+	if((send(sockfd,msg,sizeof(MSG),0)) <0 ){
+		perror("faile to send ---- admin modify\n");
+	}
+	
+	if((recv(sockfd,msg,sizeof(MSG),0)) <0 ){
+		perror("faile to send ---- admin modify\n");
+	}else{
+		printf("%s\n",msg->recvmsg);
+	}
+	return ;
 }
 
 
@@ -127,7 +170,15 @@ void do_admin_adduser(int sockfd,MSG *msg)//管理员添加用户
  ****************************************/
 void do_admin_deluser(int sockfd,MSG *msg)//管理员删除用户
 {
-	//	printf("------------%s-----------%d.\n",__func__,__LINE__);
+	printf("------%s--------%d\n",__func__,__LINE__);
+	memset(msg->info.name,0,NAMELEN);
+	msg->msgtype = ADMIN_DELUSER;
+	printf("请输入要删除的用户名：");
+	scanf("%s",msg->info.name);
+	send(sockfd,msg,sizeof(MSG),0);
+
+	recv(sockfd,msg,sizeof(MSG),0);
+	printf("recvmsg:%s\n",msg->recvmsg);
 
 }
 
@@ -141,7 +192,31 @@ void do_admin_deluser(int sockfd,MSG *msg)//管理员删除用户
 void do_admin_history (int sockfd,MSG *msg)
 {
 	//printf("------------%s-----------%d.\n",__func__,__LINE__);
-	
+	msg->msgtype=ADMIN_HISTORY;
+	send(sockfd,msg,sizeof(MSG),0);
+	printf("time       name       words\n");
+	printf("=============================\n");
+	while(1){
+		recv(sockfd,msg,sizeof(MSG),0);
+		if(msg->flags == 1){
+			memset(msg->recvmsg,0,sizeof(msg->recvmsg));
+			break;
+		}
+		printf("%s  %s  %s\n",msg->info.date,msg->username,msg->recvmsg);
+	}
+	return;
+#if 0
+	msg->msgtype = ADMIN_HISTORY;
+	msg->flags = 0;
+	if ((send(sockfd,msg,sizeof(MSG),0)) < 0){
+		printf("histroy send error\n");
+	}
+
+	while(msg->flags = 0){
+		recv(sockfd,msg,sizeof(MSG),0);
+		printf("msg->info:%s\n",msg->info.date);
+	}
+#endif
 
 }
 
@@ -159,7 +234,7 @@ void admin_menu(int sockfd,MSG *msg)
 	{
 		printf("*************************************************************\n");
 		printf("* 1：查询  2：修改 3：添加用户  4：删除用户  5：查询历史记录*\n");
-		printf("* 6：退出													*\n");
+		printf("* 6：返回上一层												*\n");
 		printf("*************************************************************\n");
 		printf("请输入您的选择（数字）>>");
 		scanf("%d",&n);
@@ -185,8 +260,9 @@ void admin_menu(int sockfd,MSG *msg)
 		case 6:
 			msg->msgtype = QUIT;
 			send(sockfd, msg, sizeof(MSG), 0);
-			close(sockfd);
-			exit(0);
+			do_login(sockfd);
+			//close(sockfd);
+			//exit(0);
 		default:
 			printf("您输入有误，请重新输入！\n");
 		}
@@ -327,7 +403,7 @@ void user_menu(int sockfd,MSG *msg)
 	while(1)
 	{
 		printf("*************************************************************\n");
-		printf("*************  1：查询  	2：修改		3：退出	 *************\n");
+		printf("**********  1：查询   2：修改	3：返回上一层	 ************\n");
 		printf("*************************************************************\n");
 		printf("请输入您的选择（数字）>>");
 		scanf("%d",&n);
@@ -344,8 +420,10 @@ void user_menu(int sockfd,MSG *msg)
 		case 3:
 			msg->msgtype = QUIT;
 			send(sockfd, msg, sizeof(MSG), 0);
-			close(sockfd);
-			exit(0);
+			do_login(sockfd);
+		//	break;
+			//close(sockfd);
+		//	exit(0);
 		default:
 			printf("您输入有误，请输入数字\n");
 			break;
